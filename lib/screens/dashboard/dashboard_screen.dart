@@ -1,6 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/dashboard_provider.dart';
+import '../../widgets/common/shimmer_widgets.dart';
+import '../main/main_screen.dart';
+import '../../widgets/dashboard/custom_app_bar.dart';
+import '../../widgets/dashboard/portfolio_card.dart';
+import '../../widgets/dashboard/mini_chart.dart';
+import '../../widgets/dashboard/market_movers.dart';
+import '../../widgets/dashboard/watchlist_preview.dart';
+import '../../widgets/dashboard/trending_section.dart';
+import '../../widgets/dashboard/enhanced_market_movers.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -10,79 +19,49 @@ class DashboardScreen extends ConsumerWidget {
     final dashboardData = ref.watch(dashboardDataProvider);
 
     return Scaffold(
-      body: dashboardData.when(
-        data: (data) {
-          return Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Portfolio Value',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '\$${data.totalPortfolioValue.toStringAsFixed(2)}',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        color: data.dailyChange >= 0
-                            ? Colors.green
-                            : Colors.red,
-                      ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '${data.dailyChange >= 0 ? '+' : ''}${data.dailyChange.toStringAsFixed(2)} (${data.dailyChangePercent.toStringAsFixed(2)}%)',
-                  style: TextStyle(
-                    color: data.dailyChange >= 0 ? Colors.green : Colors.red,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'Top Holdings',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: 16),
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: data.topHoldings.length,
-                    itemBuilder: (context, index) {
-                      final holding = data.topHoldings[index];
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        child: ListTile(
-                          title: Text(holding.name),
-                          subtitle: Text(holding.symbol),
-                          trailing: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text('\$${holding.value.toStringAsFixed(2)}'),
-                              Text(
-                                '${holding.changePercent >= 0 ? '+' : ''}${holding.changePercent.toStringAsFixed(2)}%',
-                                style: TextStyle(
-                                  color: holding.changePercent >= 0
-                                      ? Colors.green
-                                      : Colors.red,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          );
+      appBar: CustomAppBar(
+        scaffoldKey: GlobalKey<ScaffoldState>(),
+      ),
+      body: RefreshIndicator(
+        onRefresh: () async {
+          // Refresh dashboard data
+          ref.invalidate(dashboardDataProvider);
         },
-        loading: () => const Center(
-          child: CircularProgressIndicator(),
-        ),
-        error: (error, stack) => Center(
-          child: Text('Error: $error'),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Portfolio Card (Hero Section)
+              const PortfolioCard(),
+              
+              const SizedBox(height: 16),
+              
+              // Mini Chart
+              MiniChart(
+                data: [100, 95, 98, 102, 99, 105, 108, 106, 110, 108, 112, 115],
+                height: 100,
+                showGradient: true,
+              ),
+              
+              const SizedBox(height: 16),
+              
+              // Market Movers (Enhanced with filtering)
+              const EnhancedMarketMovers(),
+              
+              const SizedBox(height: 16),
+              
+              // Watchlist Preview
+              const WatchlistPreview(),
+              
+              const SizedBox(height: 16),
+              
+              // Trending Section
+              TrendingSection(stocks: sampleTrendingStocks),
+              
+              const SizedBox(height: 100), // Extra padding at bottom
+            ],
+          ),
         ),
       ),
     );
