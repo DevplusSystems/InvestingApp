@@ -2,7 +2,13 @@ import 'package:hive/hive.dart';
 
 part 'portfolio_transaction.g.dart';
 
-enum TransactionType { buy, sell }
+@HiveType(typeId: 0)
+enum TransactionType { 
+  @HiveField(0)
+  buy, 
+  @HiveField(1)
+  sell 
+}
 
 @HiveType(typeId: 1)
 class PortfolioTransaction extends HiveObject {

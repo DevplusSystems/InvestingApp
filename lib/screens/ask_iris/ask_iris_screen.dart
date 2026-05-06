@@ -55,48 +55,47 @@ class _AskIrisScreenState extends ConsumerState<AskIrisScreen> {
 
     return Column(
       children: [
-          // Chat messages
-          Expanded(
-            child: chatState.messages.isEmpty
-                ? _buildWelcomeMessage()
-                : ListView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.all(16),
-                    itemCount: chatState.messages.length,
-                    itemBuilder: (context, index) {
-                      final message = chatState.messages[index];
-                      return _buildMessageBubble(message);
-                    },
+        // Chat messages
+        Expanded(
+          child: chatState.messages.isEmpty
+              ? _buildWelcomeMessage()
+              : ListView.builder(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.all(16),
+                  itemCount: chatState.messages.length,
+                  itemBuilder: (context, index) {
+                    final message = chatState.messages[index];
+                    return _buildMessageBubble(message);
+                  },
+                ),
+        ),
+
+        // Error message
+        if (chatState.error != null)
+          Container(
+            padding: const EdgeInsets.all(16),
+            color: Colors.red.shade50,
+            child: Row(
+              children: [
+                Icon(Icons.error, color: Colors.red.shade600, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    chatState.error!,
+                    style: TextStyle(color: Colors.red.shade600),
                   ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.refresh),
+                  onPressed: () => ref.read(chatProvider.notifier).retryLastMessage(),
+                ),
+              ],
+            ),
           ),
 
-          // Error message
-          if (chatState.error != null)
-            Container(
-              padding: const EdgeInsets.all(16),
-              color: Colors.red.shade50,
-              child: Row(
-                children: [
-                  Icon(Icons.error, color: Colors.red.shade600, size: 20),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      chatState.error!,
-                      style: TextStyle(color: Colors.red.shade600),
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.refresh),
-                    onPressed: () => ref.read(chatProvider.notifier).retryLastMessage(),
-                  ),
-                ],
-              ),
-            ),
-
-          // Input field
-          _buildInputArea(chatState.isLoading),
-        ],
-      ),
+        // Input field
+        _buildInputArea(chatState.isLoading),
+      ],
     );
   }
 

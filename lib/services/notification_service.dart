@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/timezone.dart' as tz;
 import '../models/alert.dart';
 
 class NotificationService {
@@ -211,7 +212,7 @@ class NotificationService {
     }
   }
 
-  Future<void> requestPermissions() async {
+  Future<bool> requestPermissions() async {
     final result = await _notifications
         .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin>()
@@ -270,7 +271,7 @@ class NotificationService {
       payload: payload,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
-      matchDateTimeComponents: DateTimeComponents(time: scheduledTime),
+      matchDateTimeComponents: DateTimeComponents.time,
     );
   }
 }

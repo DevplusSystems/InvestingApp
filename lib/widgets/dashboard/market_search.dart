@@ -63,7 +63,7 @@ class _MarketSearchState extends State<MarketSearch> {
         controller: _controller,
         focusNode: _focusNode,
         decoration: InputDecoration(
-          hintText: '🔍 Search markets (e.g. Gold, S&P 500)',
+          hintText: 'Search markets (e.g. Gold, S&P 500)',
           hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Colors.grey.shade500,
               ),

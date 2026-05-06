@@ -7,6 +7,8 @@ class WatchlistNotifier extends StateNotifier<AsyncValue<List<WatchlistItem>>> {
     _loadWatchlist();
   }
 
+  Future<void> reload() => _loadWatchlist();
+
   Future<void> _loadWatchlist() async {
     state = const AsyncValue.loading();
     

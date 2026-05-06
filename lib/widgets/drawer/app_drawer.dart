@@ -3,6 +3,12 @@ import 'package:flutter/material.dart';
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
 
+  void _closeDrawerAndNavigate(BuildContext context, String routeName) {
+    final rootNavigator = Navigator.of(context, rootNavigator: true);
+    Navigator.of(context).pop();
+    Future.microtask(() => rootNavigator.pushNamed(routeName));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Drawer(
@@ -119,11 +125,7 @@ class AppDrawer extends StatelessWidget {
             width: double.infinity,
             child: ElevatedButton.icon(
               onPressed: () {
-                Navigator.pop(context);
-                // TODO: Navigate to login/register
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Login/Register coming soon!')),
-                );
+                _closeDrawerAndNavigate(context, '/login');
               },
               icon: const Icon(Icons.login),
               label: const Text('Login / Register'),
@@ -141,11 +143,7 @@ class AppDrawer extends StatelessWidget {
             width: double.infinity,
             child: OutlinedButton.icon(
               onPressed: () {
-                Navigator.pop(context);
-                // TODO: Navigate to plans
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('View Plans coming soon!')),
-                );
+                _closeDrawerAndNavigate(context, '/signup');
               },
               icon: const Icon(Icons.visibility),
               label: const Text('View Plans'),

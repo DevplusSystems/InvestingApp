@@ -1,12 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/dashboard_provider.dart';
-import '../../widgets/common/shimmer_widgets.dart';
-import '../main/main_screen.dart';
-import '../../widgets/dashboard/custom_app_bar.dart';
 import '../../widgets/dashboard/portfolio_card.dart';
 import '../../widgets/dashboard/mini_chart.dart';
-import '../../widgets/dashboard/market_movers.dart';
 import '../../widgets/dashboard/watchlist_preview.dart';
 import '../../widgets/dashboard/trending_section.dart';
 import '../../widgets/dashboard/enhanced_market_movers.dart';
@@ -19,9 +15,6 @@ class DashboardScreen extends ConsumerWidget {
     final dashboardData = ref.watch(dashboardDataProvider);
 
     return Scaffold(
-      appBar: CustomAppBar(
-        scaffoldKey: GlobalKey<ScaffoldState>(),
-      ),
       body: RefreshIndicator(
         onRefresh: () async {
           // Refresh dashboard data
@@ -59,7 +52,7 @@ class DashboardScreen extends ConsumerWidget {
               // Trending Section
               TrendingSection(stocks: sampleTrendingStocks),
               
-              const SizedBox(height: 100), // Extra padding at bottom
+              const SizedBox(height: 50), // Extra padding at bottom
             ],
           ),
         ),

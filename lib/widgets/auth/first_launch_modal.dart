@@ -88,9 +88,9 @@ class FirstLaunchModal extends ConsumerWidget {
               height: 50,
               child: ElevatedButton(
                 onPressed: () {
-                  Navigator.of(context).pop();
-                  // Navigate to login screen
-                  Navigator.of(context).pushNamed('/login');
+                  final rootNavigator = Navigator.of(context, rootNavigator: true);
+                  rootNavigator.pop();
+                  Future.microtask(() => rootNavigator.pushNamed('/login'));
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(context).colorScheme.primary,

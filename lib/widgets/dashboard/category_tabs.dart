@@ -46,12 +46,11 @@ class _CategoryTabsState extends State<CategoryTabs>
     super.initState();
     final initialIndex = categories.indexWhere(
       (category) => category.name == widget.selectedCategory,
-      orElse: () => 0,
     );
     _tabController = TabController(
       length: categories.length,
       vsync: this,
-      initialIndex: initialIndex,
+      initialIndex: initialIndex >= 0 ? initialIndex : 0,
     );
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) {
@@ -66,9 +65,8 @@ class _CategoryTabsState extends State<CategoryTabs>
     if (oldWidget.selectedCategory != widget.selectedCategory) {
       final newIndex = categories.indexWhere(
         (category) => category.name == widget.selectedCategory,
-        orElse: () => 0,
       );
-      _tabController.animateTo(newIndex);
+      _tabController.animateTo(newIndex >= 0 ? newIndex : 0);
     }
   }
 

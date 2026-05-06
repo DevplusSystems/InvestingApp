@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/market_data.dart';
 import '../services/market_api_service.dart';
@@ -129,7 +130,7 @@ final enhancedMarketMoversProvider = Provider<List<MarketData>>((ref) {
 final dashboardMarketDataProvider = Provider<DashboardMarketData>((ref) {
   final marketMoversAsync = ref.watch(marketMoversProvider);
   final goldPriceAsync = ref.watch(goldPriceProvider);
-  final silverPriceAsync = ref.watch(silverPriceAsync);
+  final silverPriceAsync = ref.watch(silverPriceProvider);
   
   return DashboardMarketData(
     marketMovers: marketMoversAsync,

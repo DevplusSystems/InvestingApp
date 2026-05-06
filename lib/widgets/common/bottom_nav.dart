@@ -41,14 +41,14 @@ class BottomNav extends StatelessWidget {
           ),
           label: 'Ask Iris',
         ),
-        BottomNavigationBarItem(
+      /*  BottomNavigationBarItem(
           icon: AnimatedIcon(
             index: 3,
             currentIndex: currentIndex,
             icon: Icons.timeline,
           ),
           label: 'Timeline',
-        ),
+        ),*/
         BottomNavigationBarItem(
           icon: AnimatedIcon(
             index: 4,

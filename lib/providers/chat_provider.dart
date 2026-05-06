@@ -3,8 +3,8 @@ import '../models/chat_message.dart';
 import '../services/ai_service.dart';
 
 // AI Service Provider
-final aiServiceProvider = Provider<AiService>((ref) {
-  return AiService();
+final aiServiceProvider = Provider<AIService>((ref) {
+  return AIService();
 });
 
 // Chat State
@@ -34,7 +34,7 @@ class ChatState {
 
 // Chat Provider
 class ChatNotifier extends StateNotifier<ChatState> {
-  final AiService _aiService;
+  final AIService _aiService;
 
   ChatNotifier(this._aiService) : super(ChatState());
 
@@ -56,45 +56,21 @@ class ChatNotifier extends StateNotifier<ChatState> {
     );
 
     try {
-      // Create empty assistant message for streaming
+      final responseText = await _aiService.sendMessage(message);
+
       final assistantMessage = ChatMessage(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         role: MessageRole.assistant,
-        content: '',
+        content: responseText,
         timestamp: DateTime.now(),
-        isStreaming: true,
       );
 
-      state = state.copyWith(
-        messages: [...state.messages, assistantMessage],
-      );
-
-      String fullResponse = '';
-
-      // Stream AI response
-      await for (final chunk in _aiService.sendMessage(message)) {
-        fullResponse += chunk;
-        
-        // Update the last assistant message
-        final updatedMessages = List<ChatMessage>.from(state.messages);
-        updatedMessages[updatedMessages.length - 1] = updatedMessages.last.copyWith(
-          content: fullResponse,
-        );
-
-        state = state.copyWith(messages: updatedMessages);
-      }
-
-      // Mark streaming as complete
-      final finalMessages = List<ChatMessage>.from(state.messages);
-      finalMessages[finalMessages.length - 1] = finalMessages.last.copyWith(
-        isStreaming: false,
-      );
+      final finalMessages = [...state.messages, assistantMessage];
 
       state = state.copyWith(
         messages: finalMessages,
         isLoading: false,
       );
-
     } catch (e) {
       state = state.copyWith(
         isLoading: false,

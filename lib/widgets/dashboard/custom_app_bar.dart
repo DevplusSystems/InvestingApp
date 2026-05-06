@@ -75,25 +75,25 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           // Theme Toggle
           Consumer(
             builder: (context, ref, child) {
-              final themeMode = ref.watch(themeModeProvider);
-              return PopupMenuButton<ThemeMode>(
+              final themePreference = ref.watch(themeProvider);
+              return PopupMenuButton<ThemePreference>(
                 icon: Icon(
-                  themeMode == ThemeMode.dark ? Icons.dark_mode : Icons.light_mode,
+                  themePreference == ThemePreference.dark ? Icons.dark_mode : Icons.light_mode,
                   size: 22,
                   color: Theme.of(context).iconTheme.color,
                 ),
-                onSelected: (ThemeMode mode) {
-                  ref.read(themeModeProvider.notifier).setTheme(mode);
+                onSelected: (ThemePreference preference) async {
+                  await ref.read(themeProvider.notifier).setTheme(preference);
                 },
                 itemBuilder: (context) => [
                   PopupMenuItem(
-                    value: ThemeMode.light,
+                    value: ThemePreference.light,
                     child: Row(
                       children: [
                         Icon(
                           Icons.light_mode,
                           size: 20,
-                          color: themeMode == ThemeMode.light 
+                          color: themePreference == ThemePreference.light
                               ? Theme.of(context).colorScheme.primary 
                               : null,
                         ),
@@ -103,13 +103,13 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                     ),
                   ),
                   PopupMenuItem(
-                    value: ThemeMode.dark,
+                    value: ThemePreference.dark,
                     child: Row(
                       children: [
                         Icon(
                           Icons.dark_mode,
                           size: 20,
-                          color: themeMode == ThemeMode.dark 
+                          color: themePreference == ThemePreference.dark
                               ? Theme.of(context).colorScheme.primary 
                               : null,
                         ),
@@ -119,13 +119,13 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                     ),
                   ),
                   PopupMenuItem(
-                    value: ThemeMode.system,
+                    value: ThemePreference.system,
                     child: Row(
                       children: [
                         Icon(
                           Icons.settings_brightness,
                           size: 20,
-                          color: themeMode == ThemeMode.system 
+                          color: themePreference == ThemePreference.system
                               ? Theme.of(context).colorScheme.primary 
                               : null,
                         ),

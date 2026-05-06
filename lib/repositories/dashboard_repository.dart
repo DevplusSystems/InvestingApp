@@ -65,13 +65,13 @@ class DashboardRepository {
         totalChange += holding.value * (holding.changePercent / 100);
       }
 
-      final totalChangePercent = totalValue > 0 ? (totalChange / totalValue) * 100 : 0;
+      final totalChangePercent = totalValue > 0 ? (totalChange / totalValue) * 100 : 0.0;
 
       final dashboardData = DashboardData(
         totalPortfolioValue: totalValue,
         dailyChange: totalChange,
         dailyChangePercent: totalChangePercent,
-        topHoldings holdings,
+        topHoldings: holdings,
       );
 
       // Cache the result

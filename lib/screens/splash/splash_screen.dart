@@ -12,7 +12,7 @@ class SplashScreen extends ConsumerStatefulWidget {
 }
 
 class _SplashScreenState extends ConsumerState<SplashScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late AnimationController _logoController;
   late Animation<double> _logoAnimation;
   late AnimationController _textController;

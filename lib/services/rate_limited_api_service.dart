@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../models/market_data.dart';
@@ -22,7 +23,7 @@ class RateLimitedApiService {
   static const Duration indicesCache = Duration(minutes: 10);
 
   // Generic API request with rate limiting and caching
-  Future<ApiResponse<Map<String, dynamic>>> _makeRequest(
+  Future<ApiResponse<dynamic>> _makeRequest(
     String apiName,
     String url, {
     Map<String, String>? headers,
@@ -46,7 +47,7 @@ class RateLimitedApiService {
           .timeout(ApiConfig.timeout);
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body) as Map<String, dynamic>;
+        final data = jsonDecode(response.body);
         
         // Cache successful response
         if (cacheDuration != null) {
@@ -184,7 +185,7 @@ class RateLimitedApiService {
     }
 
     try {
-      final data = response.data! as List;
+      final data = response.data! as List<dynamic>;
       final indices = data.map((item) => _parseIndexData(item as Map<String, dynamic>)).toList();
       return ApiResponse.success(indices);
     } catch (e) {
@@ -238,7 +239,7 @@ class RateLimitedApiService {
     return _cache[url];
   }
 
-  void _cacheResponse(String url, Map<String, dynamic> data, Duration duration) {
+  void _cacheResponse(String url, dynamic data, Duration duration) {
     _cache[url] = CachedResponse(
       data: data,
       timestamp: DateTime.now(),
@@ -252,7 +253,7 @@ class RateLimitedApiService {
 
   void cleanExpiredCache() {
     final now = DateTime.now();
-    _cache.removeWhere((key, value) => value.isExpired(now));
+    _cache.removeWhere((key, value) => value.isExpiredAt(now));
   }
 
   // Data parsing methods (same as before)
@@ -369,7 +370,7 @@ class RateLimitedApiService {
 }
 
 class CachedResponse {
-  final Map<String, dynamic> data;
+  final dynamic data;
   final DateTime timestamp;
   final Duration duration;
 
@@ -380,5 +381,5 @@ class CachedResponse {
   });
 
   bool get isExpired => DateTime.now().difference(timestamp) > duration;
-  bool get isExpired(DateTime now) => now.difference(timestamp) > duration;
+  bool isExpiredAt(DateTime now) => now.difference(timestamp) > duration;
 }

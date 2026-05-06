@@ -42,7 +42,7 @@ class AuthState {
 }
 
 class AuthNotifier extends StateNotifier<AuthState> {
-  AuthNotifier() : super(const AuthState());
+  AuthNotifier() : super(AuthState());
 
   Future<void> initializeAuth() async {
     state = state.copyWith(status: AuthStatus.loading);

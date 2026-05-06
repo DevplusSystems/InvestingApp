@@ -1,17 +1,18 @@
 import 'dart:convert';
 import 'package:hive/hive.dart';
+import 'package:http/http.dart';
 
 class CacheService {
-  static const String _dashboardBox = 'dashboard_cache';
-  static const String _quotesBox = 'quotes_cache';
+  static const String _dashboardBoxName = 'dashboard_cache';
+  static const String _quotesBoxName = 'quotes_cache';
   static const Duration _defaultCacheDuration = Duration(minutes: 15);
 
   late Box _dashboardBox;
   late Box _quotesBox;
 
   Future<void> init() async {
-    _dashboardBox = await Hive.openBox(_dashboardBox);
-    _quotesBox = await Hive.openBox(_quotesBox);
+    _dashboardBox = await Hive.openBox(_dashboardBoxName);
+    _quotesBox = await Hive.openBox(_quotesBoxName);
   }
 
   // Cache dashboard data

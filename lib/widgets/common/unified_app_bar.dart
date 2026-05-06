@@ -23,13 +23,13 @@ class UnifiedAppBar extends ConsumerWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeIcon = ref.watch(themeIconProvider);
-    final isDarkMode = ref.watch(themeProvider.notifier).isDarkMode(context);
+    final themePreference = ref.watch(themeProvider);
 
     return AppBar(
       title: Row(
         children: [
           // App Logo/Icon
-          Container(
+        /*  Container(
             width: 32,
             height: 32,
             decoration: BoxDecoration(
@@ -41,8 +41,10 @@ class UnifiedAppBar extends ConsumerWidget implements PreferredSizeWidget {
               color: Colors.white,
               size: 20,
             ),
-          ),
+          ),*/
+/*
           const SizedBox(width: 12),
+*/
           // App Name
           Text(
             title,
@@ -68,17 +70,17 @@ class UnifiedAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 ),
               );
             },
-          ),
+        ),
         // Theme Toggle
-        PopupMenuButton<AppTheme>(
+        PopupMenuButton<ThemePreference>(
           icon: Icon(themeIcon),
           tooltip: 'Change Theme',
-          onSelected: (AppTheme theme) {
-            ref.read(themeProvider.notifier).setTheme(theme);
+          onSelected: (ThemePreference theme) async {
+            await ref.read(themeProvider.notifier).setTheme(theme);
           },
           itemBuilder: (BuildContext context) => [
-            PopupMenuItem<AppTheme>(
-              value: AppTheme.light,
+            PopupMenuItem<ThemePreference>(
+              value: ThemePreference.light,
               child: Row(
                 children: [
                   Icon(
@@ -87,7 +89,7 @@ class UnifiedAppBar extends ConsumerWidget implements PreferredSizeWidget {
                   ),
                   const SizedBox(width: 8),
                   const Text('Light'),
-                  if (ref.watch(themeProvider) == AppTheme.light)
+                  if (themePreference == ThemePreference.light)
                     Padding(
                       padding: const EdgeInsets.only(left: 8),
                       child: Icon(
@@ -99,8 +101,8 @@ class UnifiedAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 ],
               ),
             ),
-            PopupMenuItem<AppTheme>(
-              value: AppTheme.dark,
+            PopupMenuItem<ThemePreference>(
+              value: ThemePreference.dark,
               child: Row(
                 children: [
                   Icon(
@@ -109,7 +111,7 @@ class UnifiedAppBar extends ConsumerWidget implements PreferredSizeWidget {
                   ),
                   const SizedBox(width: 8),
                   const Text('Dark'),
-                  if (ref.watch(themeProvider) == AppTheme.dark)
+                  if (themePreference == ThemePreference.dark)
                     Padding(
                       padding: const EdgeInsets.only(left: 8),
                       child: Icon(
@@ -121,8 +123,8 @@ class UnifiedAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 ],
               ),
             ),
-            PopupMenuItem<AppTheme>(
-              value: AppTheme.system,
+            PopupMenuItem<ThemePreference>(
+              value: ThemePreference.system,
               child: Row(
                 children: [
                   Icon(
@@ -131,7 +133,7 @@ class UnifiedAppBar extends ConsumerWidget implements PreferredSizeWidget {
                   ),
                   const SizedBox(width: 8),
                   const Text('System'),
-                  if (ref.watch(themeProvider) == AppTheme.system)
+                  if (themePreference == ThemePreference.system)
                     Padding(
                       padding: const EdgeInsets.only(left: 8),
                       child: Icon(

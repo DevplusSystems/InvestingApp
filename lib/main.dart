@@ -10,6 +10,7 @@ import 'screens/auth/login_screen.dart';
 import 'screens/auth/signup_screen.dart';
 import 'services/cache_service.dart';
 import 'theme/app_theme.dart';
+import 'models/portfolio_transaction.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,19 +18,18 @@ void main() async {
   // Initialize Hive
   await Hive.initFlutter();
   
+  // Register Hive adapters
+  Hive.registerAdapter(TransactionTypeAdapter());
+  Hive.registerAdapter(PortfolioTransactionAdapter());
+  
   // Initialize Cache Service
   final cacheService = CacheService();
   await cacheService.init();
-  
-  // Initialize theme provider
-  final themeNotifier = ThemeNotifier();
-  await themeNotifier.loadTheme();
   
   runApp(
     ProviderScope(
       overrides: [
         cacheServiceProvider.overrideWithValue(cacheService),
-        themeProvider.overrideWithNotifier(themeNotifier),
       ],
       child: const MyApp(),
     ),
@@ -55,6 +55,7 @@ class MyApp extends ConsumerWidget {
         '/signup': (context) => const SignupScreen(),
         '/main': (context) => const MainScreen(),
       },
+      debugShowCheckedModeBanner: false, // This line removes the banner
       home: const SplashScreen(),
     );
   }

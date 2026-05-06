@@ -69,124 +69,96 @@ class WatchlistPreview extends ConsumerWidget {
                 ),
               ),
               child: Column(
-                children: [
-                  ...previewItems.asMap().entries.map((entry) {
-                    final index = entry.key;
-                    final item = entry.value;
-                    return _buildWatchlistRow(context, item, index, isLast: index == previewItems.length - 1);
-                  }),
-                  
-                  // Show more indicator if there are more items
-                  if (watchlist.length > 4)
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        border: Border(
-                          top: BorderSide(
-                            color: Theme.of(context).dividerColor.withOpacity(0.1),
-                          ),
-                        ),
-                      ),
-                      child: Text(
-                        '+${watchlist.length - 4} more',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context).colorScheme.primary,
-                              fontWeight: FontWeight.w500,
-                            ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                ],
+                children: previewItems.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final item = entry.value;
+                  return _buildWatchlistRow(context, item, index, previewItems.length - 1);
+                }).toList(),
               ),
             );
           },
-          loading: () => _buildShimmer(),
-          error: (error, stack) => _buildError(context),
+          loading: () => _buildShimmer(context),
+          error: (error, stack) => _buildError(context, error),
         ),
       ],
     );
   }
 
-  Widget _buildWatchlistRow(BuildContext context, WatchlistItem item, int index, {required bool isLast}) {
-    return TweenAnimationBuilder<double>(
-      duration: Duration(milliseconds: 300 + (index * 100)),
-      tween: Tween(begin: 0.0, end: 1.0),
-      builder: (context, value, child) {
-        return Transform.translate(
-          offset: Offset(20 * (1 - value), 0),
-          child: Opacity(
-            opacity: value,
-            child: InkWell(
-              onTap: () {
-                // Navigate to stock details
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Stock details for ${item.symbol} coming soon!')),
-                );
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  border: isLast 
-                      ? null 
-                      : Border(
-                          bottom: BorderSide(
-                            color: Theme.of(context).dividerColor.withOpacity(0.05),
-                          ),
-                        ),
+  Widget _buildWatchlistRow(BuildContext context, WatchlistItem item, int index, int lastIndex) {
+    final isPositive = item.changePercent >= 0;
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        border: index == lastIndex 
+            ? null 
+            : Border(
+                bottom: BorderSide(
+                  color: Theme.of(context).dividerColor.withOpacity(0.05),
                 ),
-                child: Row(
-                  children: [
-                    // Symbol
-                    Text(
-                      item.symbol,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                          ),
-                    ),
-                    
-                    const Spacer(),
-                    
-                    // Price
-                    AnimatedNumber(
-                      value: item.price,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 14,
-                          ),
-                      prefix: '\$',
-                      decimals: 2,
-                      duration: const Duration(milliseconds: 600),
-                    ),
-                    
-                    const SizedBox(width: 12),
-                    
-                    // Change percentage
-                    Container(
+              ),
+      ),
+      child: Row(
+        children: [
+          // Symbol
+          Expanded(
+            flex: 2,
+            child: Text(
+              item.symbol,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+          ),
+          
+          // Price
+          Expanded(
+            flex: 2,
+            child: AnimatedNumber(
+              value: item.price,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+              prefix: '\$',
+              duration: const Duration(milliseconds: 600),
+            ),
+          ),
+          
+          // Change
+          Expanded(
+            flex: 2,
+            child: TweenAnimationBuilder<double>(
+              duration: const Duration(milliseconds: 600),
+              tween: Tween(begin: 0.0, end: 1.0),
+              builder: (context, value, child) {
+                return Transform.translate(
+                  offset: Offset(0, 10 * (1 - value)),
+                  child: Opacity(
+                    opacity: value,
+                    child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: item.changePercent >= 0 
+                        color: isPositive 
                             ? Colors.green.withOpacity(0.1)
                             : Colors.red.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        '${item.changePercent >= 0 ? '+' : ''}${item.changePercent.abs().toStringAsFixed(1)}%',
+                        '${isPositive ? '+' : ''}${item.changePercent.abs().toStringAsFixed(2)}%',
                         style: TextStyle(
-                          color: item.changePercent >= 0 ? Colors.green : Colors.red,
+                          color: isPositive ? Colors.green : Colors.red,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
-                  ],
-                ),
-              ),
+                  ),
+                );
+              },
             ),
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 
@@ -204,40 +176,29 @@ class WatchlistPreview extends ConsumerWidget {
         children: [
           Icon(
             Icons.star_border,
-            size: 32,
+            size: 48,
             color: Colors.grey.shade400,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Text(
-            'Your watchlist is empty',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            'No watchlist items',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   color: Colors.grey.shade600,
                 ),
           ),
           const SizedBox(height: 4),
           Text(
-            'Add stocks to track their performance',
+            'Add stocks to track them here',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Colors.grey.shade500,
                 ),
-          ),
-          const SizedBox(height: 12),
-          TextButton.icon(
-            onPressed: () {
-              Navigator.of(context).pushNamed('/watchlist');
-            },
-            icon: const Icon(Icons.add, size: 16),
-            label: const Text('Add Stocks'),
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildShimmer() {
+  Widget _buildShimmer(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
@@ -269,22 +230,23 @@ class WatchlistPreview extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-                const Spacer(),
-                Container(
-                  width: 60,
-                  height: 14,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(2),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Container(
+                    height: 14,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Container(
-                  width: 40,
-                  height: 14,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(2),
+                Expanded(
+                  child: Container(
+                    height: 14,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
                 ),
               ],
@@ -295,7 +257,7 @@ class WatchlistPreview extends ConsumerWidget {
     );
   }
 
-  Widget _buildError(BuildContext context) {
+  Widget _buildError(BuildContext context, Object error) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -309,22 +271,22 @@ class WatchlistPreview extends ConsumerWidget {
         children: [
           Icon(
             Icons.error_outline,
-            size: 32,
+            size: 48,
             color: Colors.red.shade400,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Text(
             'Error loading watchlist',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   color: Colors.red.shade600,
                 ),
           ),
           const SizedBox(height: 4),
-          TextButton(
-            onPressed: () {
-              // Retry loading
-            },
-            child: const Text('Retry'),
+          Text(
+            'Please try again later',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Colors.red.shade500,
+                ),
           ),
         ],
       ),

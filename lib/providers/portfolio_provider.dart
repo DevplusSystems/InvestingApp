@@ -1,220 +1,192 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/portfolio_transaction.dart';
 
-class PortfolioNotifier extends StateNotifier<AsyncValue<List<PortfolioHolding>>> {
+class PortfolioNotifier extends StateNotifier<AsyncValue<List<PortfolioTransaction>>> {
   PortfolioNotifier() : super(const AsyncValue.loading()) {
     _loadPortfolio();
   }
 
+  late Box<PortfolioTransaction> _transactionsBox;
+
   Future<void> _loadPortfolio() async {
-    state = const AsyncValue.loading();
-    
     try {
-      final transactionsBox = await Hive.openBox<PortfolioTransaction>('transactions');
-      final transactions = transactionsBox.values.toList();
-      
-      // Calculate holdings from transactions
-      final holdings = _calculateHoldings(transactions);
-      
-      state = AsyncValue.data(holdings);
-    } catch (e, stack) {
-      state = AsyncValue.error(e, stack);
+      _transactionsBox = await Hive.openBox<PortfolioTransaction>('portfolio_transactions');
+      final transactions = _transactionsBox.values.toList();
+      state = AsyncValue.data(transactions);
+    } catch (e) {
+      debugPrint('Error loading portfolio: $e');
+      state = AsyncValue.error('Failed to load portfolio data: ${e.toString()}', StackTrace.current);
     }
-  }
-
-  List<PortfolioHolding> _calculateHoldings(List<PortfolioTransaction> transactions) {
-    final Map<String, List<PortfolioTransaction>> symbolTransactions = {};
-    
-    // Group transactions by symbol
-    for (final transaction in transactions) {
-      if (!symbolTransactions.containsKey(transaction.symbol)) {
-        symbolTransactions[transaction.symbol] = [];
-      }
-      symbolTransactions[transaction.symbol]!.add(transaction);
-    }
-
-    final holdings = <PortfolioHolding>[];
-    
-    // Calculate holdings for each symbol
-    for (final entry in symbolTransactions.entries) {
-      final symbol = entry.key;
-      final symbolTransactions = entry.value;
-      
-      int totalQuantity = 0;
-      double totalInvested = 0.0;
-      
-      // Calculate net quantity and total invested
-      for (final transaction in symbolTransactions) {
-        if (transaction.type == TransactionType.buy) {
-          totalQuantity += transaction.quantity;
-          totalInvested += transaction.totalCost;
-        } else {
-          totalQuantity -= transaction.quantity;
-          // For sell transactions, we reduce invested amount proportionally
-          totalInvested -= (transaction.quantity / totalQuantity) * transaction.totalValue;
-        }
-      }
-      
-      // Only include holdings with positive quantity
-      if (totalQuantity > 0) {
-        final averagePrice = totalInvested / totalQuantity;
-        
-        holdings.add(PortfolioHolding(
-          symbol: symbol,
-          name: symbol, // TODO: Get actual name from API
-          quantity: totalQuantity,
-          averagePrice: averagePrice,
-          totalInvested: totalInvested,
-          currentPrice: averagePrice, // TODO: Get current price from API
-          lastUpdated: DateTime.now(),
-        ));
-      }
-    }
-    
-    return holdings;
   }
 
   Future<void> addTransaction(PortfolioTransaction transaction) async {
     try {
-      final transactionsBox = await Hive.openBox<PortfolioTransaction>('transactions');
-      await transactionsBox.add(transaction);
-      
-      // Reload portfolio
-      await _loadPortfolio();
-    } catch (e, stack) {
-      state = AsyncValue.error(e, stack);
+      await _transactionsBox.add(transaction);
+      final transactions = [...(state.value ?? const <PortfolioTransaction>[]), transaction];
+      state = AsyncValue.data(transactions);
+    } catch (e) {
+      state = AsyncValue.error(e, StackTrace.current);
     }
   }
 
-  Future<void> buyStock({
-    required String symbol,
-    required int quantity,
-    required double price,
-    double commission = 0.0,
-    String? notes,
-  }) async {
-    final transaction = PortfolioTransaction(
-      type: TransactionType.buy,
-      symbol: symbol,
-      quantity: quantity,
-      price: price,
-      commission: commission,
-      date: DateTime.now(),
-      notes: notes,
-    );
-    
-    await addTransaction(transaction);
-  }
-
-  Future<void> sellStock({
-    required String symbol,
-    required int quantity,
-    required double price,
-    double commission = 0.0,
-    String? notes,
-  }) async {
-    // Check if user has enough shares
-    final currentHoldings = state.whenData((holdings) => holdings) ?? [];
-    final holding = currentHoldings.firstWhere(
-      (h) => h.symbol == symbol,
-      orElse: () => throw Exception('No holdings found for $symbol'),
-    );
-    
-    if (holding.quantity < quantity) {
-      throw Exception('Insufficient shares. You have ${holding.quantity} shares of $symbol');
-    }
-    
-    final transaction = PortfolioTransaction(
-      type: TransactionType.sell,
-      symbol: symbol,
-      quantity: quantity,
-      price: price,
-      commission: commission,
-      date: DateTime.now(),
-      notes: notes,
-    );
-    
-    await addTransaction(transaction);
-  }
-
-  Future<void> updateCurrentPrices(Map<String, double> prices) async {
+  Future<void> updateTransaction(int key, PortfolioTransaction transaction) async {
     try {
-      final currentHoldings = state.whenData((holdings) => holdings) ?? [];
-      
-      final updatedHoldings = currentHoldings.map((holding) {
-        final currentPrice = prices[holding.symbol] ?? holding.currentPrice;
-        return holding.copyWith(
-          currentPrice: currentPrice,
-          lastUpdated: DateTime.now(),
-        );
-      }).toList();
-      
-      state = AsyncValue.data(updatedHoldings);
-    } catch (e, stack) {
-      state = AsyncValue.error(e, stack);
+      await _transactionsBox.put(key, transaction);
+      final transactions = (state.value ?? const <PortfolioTransaction>[])
+          .map((t) => t.key == key ? transaction : t)
+          .toList();
+      state = AsyncValue.data(transactions);
+    } catch (e) {
+      state = AsyncValue.error(e, StackTrace.current);
+    }
+  }
+
+  Future<void> deleteTransaction(int key) async {
+    try {
+      await _transactionsBox.delete(key);
+      final transactions =
+          (state.value ?? const <PortfolioTransaction>[]).where((t) => t.key != key).toList();
+      state = AsyncValue.data(transactions);
+    } catch (e) {
+      state = AsyncValue.error(e, StackTrace.current);
     }
   }
 
   Future<void> clearPortfolio() async {
     try {
-      final transactionsBox = await Hive.openBox<PortfolioTransaction>('transactions');
-      await transactionsBox.clear();
-      
+      await _transactionsBox.clear();
       state = const AsyncValue.data([]);
-    } catch (e, stack) {
-      state = AsyncValue.error(e, stack);
+    } catch (e) {
+      state = AsyncValue.error(e, StackTrace.current);
     }
   }
 
-  // Get portfolio summary
-  double get totalInvestment {
-    if (state is! AsyncData) return 0.0;
-    final holdings = (state as AsyncData).value;
-    return holdings.fold(0.0, (sum, holding) => sum + holding.totalInvested);
+  // Get current holdings by stock symbol
+  Map<String, Map<String, dynamic>> getCurrentHoldings() {
+    final transactions = state.value ?? const <PortfolioTransaction>[];
+    final holdings = <String, Map<String, dynamic>>{};
+
+    for (final transaction in transactions) {
+      final symbol = transaction.symbol;
+      
+      if (!holdings.containsKey(symbol)) {
+        holdings[symbol] = {
+          'quantity': 0,
+          'totalCost': 0.0,
+          'totalValue': 0.0,
+          'avgPrice': 0.0,
+        };
+      }
+
+      if (transaction.type == TransactionType.buy) {
+        holdings[symbol]!['quantity'] += transaction.quantity;
+        holdings[symbol]!['totalCost'] += (transaction.quantity * transaction.price);
+        holdings[symbol]!['totalValue'] += (transaction.quantity * transaction.price);
+      } else {
+        holdings[symbol]!['quantity'] -= transaction.quantity;
+        holdings[symbol]!['totalCost'] -= (transaction.quantity * transaction.price);
+        holdings[symbol]!['totalValue'] -= (transaction.quantity * transaction.price);
+      }
+
+      // Calculate average price
+      if (holdings[symbol]!['quantity'] > 0) {
+        holdings[symbol]!['avgPrice'] = holdings[symbol]!['totalCost'] / holdings[symbol]!['quantity'];
+      }
+    }
+
+    return holdings;
   }
 
-  double get currentValue {
-    if (state is! AsyncData) return 0.0;
-    final holdings = (state as AsyncData).value;
-    return holdings.fold(0.0, (sum, holding) => sum + holding.currentValue);
+  // Get available quantity for a specific stock
+  int getAvailableQuantity(String symbol) {
+    final holdings = getCurrentHoldings();
+    return holdings[symbol]?['quantity'] ?? 0;
   }
 
-  double get totalProfitLoss {
-    return currentValue - totalInvestment;
+  // Check if user can sell specified quantity
+  bool canSellStock(String symbol, int quantity) {
+    final available = getAvailableQuantity(symbol);
+    return available >= quantity;
   }
 
-  double get totalProfitLossPercent {
-    if (totalInvestment == 0.0) return 0.0;
-    return (totalProfitLoss / totalInvestment) * 100.0;
+  Future<double> getTotalValue() async {
+    try {
+      final holdings = getCurrentHoldings();
+      double total = 0.0;
+      for (final holding in holdings.values) {
+        total += holding['totalValue'] as double;
+      }
+      return total;
+    } catch (e) {
+      return 0.0;
+    }
   }
 
-  int get holdingsCount {
-    if (state is! AsyncData) return 0;
-    return (state as AsyncData).value.length;
+  Future<double> getTotalInvestment() async {
+    try {
+      final transactions = state.value ?? const <PortfolioTransaction>[];
+      return transactions.fold<double>(
+        0.0,
+        (sum, transaction) => sum + (transaction.quantity * transaction.price),
+      );
+    } catch (e) {
+      return 0.0;
+    }
+  }
+
+  Future<double> getTotalProfitLoss() async {
+    try {
+      final transactions = state.value ?? const <PortfolioTransaction>[];
+      return transactions.fold<double>(0.0, (sum, transaction) {
+        if (transaction.type == TransactionType.sell) {
+          return sum - (transaction.quantity * transaction.price);
+        } else {
+          return sum + (transaction.quantity * transaction.price);
+        }
+      });
+    } catch (e) {
+      return 0.0;
+    }
+  }
+
+  Future<Map<String, dynamic>> getPortfolioSummary() async {
+    try {
+      final currentValue = await getTotalValue();
+      final totalInvestment = await getTotalInvestment();
+      final totalProfitLoss = await getTotalProfitLoss();
+      final totalProfitLossPercent = totalInvestment > 0 ? (totalProfitLoss / totalInvestment) * 100 : 0.0;
+
+      return {
+        'currentValue': currentValue,
+        'totalInvestment': totalInvestment,
+        'totalProfitLoss': totalProfitLoss,
+        'totalProfitLossPercent': totalProfitLossPercent,
+      };
+    } catch (e) {
+      return {
+        'currentValue': 0.0,
+        'totalInvestment': 0.0,
+        'totalProfitLoss': 0.0,
+        'totalProfitLossPercent': 0.0,
+      };
+    }
+  }
+
+  @override
+  void dispose() {
+    _transactionsBox.close();
+    super.dispose();
   }
 }
 
-final portfolioProvider = StateNotifierProvider<PortfolioNotifier, AsyncValue<List<PortfolioHolding>>>(
-  (ref) => PortfolioNotifier(),
-);
-
-final portfolioSummaryProvider = Provider<Map<String, double>>((ref) {
-  final portfolioNotifier = ref.watch(portfolioProvider.notifier);
-  return {
-    'totalInvestment': portfolioNotifier.totalInvestment,
-    'currentValue': portfolioNotifier.currentValue,
-    'totalProfitLoss': portfolioNotifier.totalProfitLoss,
-    'totalProfitLossPercent': portfolioNotifier.totalProfitLossPercent,
-    'holdingsCount': portfolioNotifier.holdingsCount.toDouble(),
-  };
+// Providers
+final portfolioProvider = StateNotifierProvider<PortfolioNotifier, AsyncValue<List<PortfolioTransaction>>>((ref) {
+  return PortfolioNotifier();
 });
 
-final portfolioHoldingsProvider = Provider<List<PortfolioHolding>>((ref) {
-  final portfolioAsync = ref.watch(portfolioProvider);
-  return portfolioAsync.when(
-    data: (holdings) => holdings,
-    loading: () => [],
-    error: (_, __) => [],
-  );
+final portfolioSummaryProvider = FutureProvider<Map<String, dynamic>>((ref) async {
+  final notifier = ref.read(portfolioProvider.notifier);
+  return await notifier.getPortfolioSummary();
 });

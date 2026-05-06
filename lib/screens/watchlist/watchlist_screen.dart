@@ -81,7 +81,7 @@ class _WatchlistScreenState extends ConsumerState<WatchlistScreen> {
 
                 return RefreshIndicator(
                   onRefresh: () async {
-                    await ref.read(watchlistProvider.notifier)._loadWatchlist();
+                    await ref.read(watchlistProvider.notifier).reload();
                   },
                   child: ListView.builder(
                     padding: const EdgeInsets.all(16.0),
@@ -174,7 +174,7 @@ class _WatchlistScreenState extends ConsumerState<WatchlistScreen> {
           const SizedBox(height: 24),
           ElevatedButton.icon(
             onPressed: () {
-              ref.read(watchlistProvider.notifier)._loadWatchlist();
+              ref.read(watchlistProvider.notifier).reload();
             },
             icon: const Icon(Icons.refresh),
             label: const Text('Retry'),

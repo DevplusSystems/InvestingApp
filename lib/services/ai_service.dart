@@ -1,103 +1,49 @@
-import 'dart:async';
-import 'package:openai_dart/openai_dart.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
-import '../models/chat_message.dart';
 
-class AiService {
-  late final OpenAIClient _client;
-  final List<ChatMessage> _conversationHistory = [];
+class AIService {
+  AIService({http.Client? client}) : _client = client ?? http.Client();
 
-  AiService() {
-    _client = OpenAIClient(
-      apiKey: ApiConfig.openaiApiKey,
-      baseUrl: 'https://api.openai.com/v1',
-    );
-  }
+  final http.Client _client;
 
-  // System prompt for Iris - the investment assistant
-  static const String _systemPrompt = '''You are Iris, an intelligent investment assistant. You help users with:
-- Stock market analysis and insights
-- Portfolio recommendations
-- Investment strategies
-- Financial market trends
-- Risk assessment
-
-Provide clear, concise, and well-reasoned responses. Always include appropriate disclaimers that your advice is for informational purposes only and not financial advice.''';
-
-  Stream<String> sendMessage(String userMessage) async* {
-    // Add user message to history
-    final userChatMessage = ChatMessage(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      role: MessageRole.user,
-      content: userMessage,
-      timestamp: DateTime.now(),
-    );
-    _conversationHistory.add(userChatMessage);
-
-    // Build messages for API
-    final messages = [
-      ChatMessage(
-        id: 'system',
-        role: MessageRole.system,
-        content: _systemPrompt,
-        timestamp: DateTime.now(),
-      ),
-      ..._conversationHistory,
-    ];
-
-    // Convert to OpenAI format
-    final openAiMessages = messages.map((msg) {
-      return ChatCompletionMessage(
-        role: switch (msg.role) {
-          MessageRole.user => ChatCompletionMessageRole.user,
-          MessageRole.assistant => ChatCompletionMessageRole.assistant,
-          MessageRole.system => ChatCompletionMessageRole.system,
-        },
-        content: ChatCompletionMessageContent.text(msg.content),
-      );
-    }).toList();
-
-    try {
-      // Create streaming request
-      final stream = _client.createChatCompletionStream(
-        request: CreateChatCompletionRequest(
-          model: ApiConfig.openaiModel,
-          messages: openAiMessages,
-          temperature: 0.7,
-          maxTokens: 1000,
-        ),
-      );
-
-      String fullResponse = '';
-      
-      await for (final chunk in stream) {
-        final delta = chunk.choices.first.delta;
-        if (delta.content != null) {
-          final content = delta.content!;
-          fullResponse += content;
-          yield content;
-        }
-      }
-
-      // Add assistant response to history
-      final assistantMessage = ChatMessage(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        role: MessageRole.assistant,
-        content: fullResponse,
-        timestamp: DateTime.now(),
-      );
-      _conversationHistory.add(assistantMessage);
-
-    } catch (e) {
-      yield 'Error: $e';
+  Future<String> sendMessage(String message) async {
+    final apiKey = ApiConfig.openaiApiKey;
+    if (apiKey.isEmpty || apiKey == 'YOUR_OPENAI_API_KEY') {
+      return 'OpenAI API key is not configured.';
     }
+
+    final uri = Uri.parse('https://api.openai.com/v1/chat/completions');
+    final response = await _client.post(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $apiKey',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'model': ApiConfig.openaiModel,
+        'messages': [
+          {'role': 'user', 'content': message},
+        ],
+        'temperature': 0.7,
+        'max_tokens': 1000,
+      }),
+    );
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('OpenAI request failed (${response.statusCode}): ${response.body}');
+    }
+
+    final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+    final choices = (decoded['choices'] as List?) ?? const [];
+    if (choices.isEmpty) return 'No response';
+
+    final messageObj = (choices.first as Map<String, dynamic>)['message'] as Map<String, dynamic>?;
+    final content = messageObj?['content'];
+    return (content is String && content.trim().isNotEmpty) ? content : 'No response';
   }
 
   void clearHistory() {
-    _conversationHistory.clear();
-  }
-
-  List<ChatMessage> getConversationHistory() {
-    return List.unmodifiable(_conversationHistory);
+    // No-op for now (hook up persisted history later).
   }
 }

@@ -116,49 +116,51 @@ class TrendingSection extends StatelessWidget {
                       // Stock info
                       Expanded(
                         flex: 2,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              stock.symbol,
-                              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 13,
-                                  ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              stock.name,
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Colors.grey.shade600,
-                                    fontSize: 11,
-                                  ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                Icon(
-                                  isPositive ? Icons.arrow_upward : Icons.arrow_downward,
-                                  size: 12,
-                                  color: isPositive ? Colors.green : Colors.red,
-                                ),
-                                const SizedBox(width: 2),
-                                Text(
-                                  '${isPositive ? '+' : ''}${stock.changePercent.abs().toStringAsFixed(1)}%',
-                                  style: TextStyle(
+                        child: SingleChildScrollView(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                stock.symbol,
+                                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 13,
+                                    ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                stock.name,
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: Colors.grey.shade600,
+                                      fontSize: 11,
+                                    ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Icon(
+                                    isPositive ? Icons.arrow_upward : Icons.arrow_downward,
+                                    size: 12,
                                     color: isPositive ? Colors.green : Colors.red,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
                                   ),
-                                ),
-                              ],
-                            ),
-                          ],
+                                  const SizedBox(width: 2),
+                                  Text(
+                                    '${isPositive ? '+' : ''}${stock.changePercent.abs().toStringAsFixed(1)}%',
+                                    style: TextStyle(
+                                      color: isPositive ? Colors.green : Colors.red,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -292,26 +294,5 @@ final List<TrendingStock> sampleTrendingStocks = [
     price: 485.09,
     changePercent: 4.8,
     chartData: [460, 465, 470, 475, 480, 485, 485.09],
-  ),
-  TrendingStock(
-    symbol: 'GOOGL',
-    name: 'Alphabet Inc.',
-    price: 142.67,
-    changePercent: 0.9,
-    chartData: [140, 141, 141.5, 142, 142.5, 142.6, 142.67],
-  ),
-  TrendingStock(
-    symbol: 'MSFT',
-    name: 'Microsoft Corp.',
-    price: 378.91,
-    changePercent: -0.9,
-    chartData: [382, 381, 380, 379, 378, 378.5, 378.91],
-  ),
-  TrendingStock(
-    symbol: 'AMZN',
-    name: 'Amazon.com Inc.',
-    price: 156.78,
-    changePercent: 1.9,
-    chartData: [153, 154, 155, 156, 156.5, 156.7, 156.78],
-  ),
+  )
 ];

@@ -218,8 +218,12 @@ class MarketApiService {
     );
   }
 
-  List<MarketData> _parseMarketMoversList(List<dynamic> data) {
-    return data.map((item) {
+  List<MarketData> _parseMarketMoversList(dynamic data) {
+    if (data is! List) {
+      return [];
+    }
+    
+    return (data as List).map((item) {
       final stock = item as Map<String, dynamic>;
       final price = double.tryParse(stock['price']?.toString() ?? '0') ?? 0.0;
       final change = double.tryParse(stock['change']?.toString() ?? '0') ?? 0.0;

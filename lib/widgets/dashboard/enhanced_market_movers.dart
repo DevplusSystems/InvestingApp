@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/market_filter_provider.dart';
+import '../../providers/market_data_provider.dart';
+import 'market_search.dart';
+import 'category_tabs.dart';
 
 class EnhancedMarketMovers extends ConsumerWidget {
   const EnhancedMarketMovers({super.key});
@@ -8,7 +11,7 @@ class EnhancedMarketMovers extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final filter = ref.watch(marketFilterProvider);
-    final movers = ref.watch(filteredMarketMoversProvider);
+    final movers = ref.watch(enhancedMarketMoversProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -77,7 +80,7 @@ class EnhancedMarketMovers extends ConsumerWidget {
     );
   }
 
-  Widget _buildMoversList(BuildContext context, List<MarketMover> movers) {
+  Widget _buildMoversList(BuildContext context, List<dynamic> movers) {
     return ListView.builder(
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -89,7 +92,7 @@ class EnhancedMarketMovers extends ConsumerWidget {
     );
   }
 
-  Widget _buildMoverCard(BuildContext context, MarketMover mover, int index) {
+  Widget _buildMoverCard(BuildContext context, dynamic mover, int index) {
     final isPositive = mover.changePercent >= 0;
     
     return TweenAnimationBuilder<double>(
@@ -201,29 +204,38 @@ class EnhancedMarketMovers extends ConsumerWidget {
           color: Theme.of(context).dividerColor.withOpacity(0.1),
         ),
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.search_off,
-            size: 32,
-            color: Colors.grey.shade400,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'No results found',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.grey.shade600,
-                ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Try adjusting your filters',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.grey.shade500,
-                ),
-          ),
-        ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.search_off,
+                    size: 48,
+                    color: Colors.grey.shade400,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'No results found',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: Colors.grey.shade600,
+                        ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Try adjusting your filters',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.grey.shade500,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -233,11 +245,48 @@ class EnhancedMarketMovers extends ConsumerWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => FilterBottomSheet(
-        currentFilter: ref.read(marketFilterProvider),
-        onFilterChanged: (newFilter) {
-          ref.read(marketFilterProvider.notifier).updateFilter(newFilter);
-        },
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle bar
+            Container(
+              width: double.infinity,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+            ),
+            
+            // Filter content placeholder
+            Container(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Filter Options',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Filter options will be available here...',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ],
+              ),
+            ),
+            
+            const SizedBox(height: 20),
+          ],
+        ),
       ),
     );
   }

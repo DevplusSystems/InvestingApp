@@ -23,7 +23,9 @@ class _MainScreenState extends State<MainScreen> {
     DashboardScreen(),
     PortfolioScreen(),
     AskIrisScreen(),
+/*
     TimelineScreen(),
+*/
     WatchlistScreen(),
   ];
 
@@ -31,7 +33,9 @@ class _MainScreenState extends State<MainScreen> {
     'Dashboard',
     'Portfolio',
     'Ask Iris',
+/*
     'Timeline',
+*/
     'Watchlist',
   ];
 
